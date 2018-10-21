@@ -3,6 +3,7 @@ package com.example.sande.quizapp_roomdatabase;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.TextView;
@@ -13,8 +14,10 @@ import java.util.List;
 
 public class QuizActivity extends AppCompatActivity {
 
+    private static final String TAG = "QuizActivity";
     private QuestionDatabase db;
-    private List<QuestionTable> quizezList;
+    private List<QuestionTable> quizList;
+    QuestionsDao mquestionsDao;// instance variable of interface
     private TextView question;
     private CheckBox optionOne,optionTwo,optionThree,optionFour;
     private int currentQuestionPosition = 0;
@@ -23,7 +26,9 @@ public class QuizActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quiz);
 
+
         db = QuestionDatabase.getDatabase(this);
+        mquestionsDao = db.questionsDao();
 
         question = findViewById(R.id.tView_Question);
         optionOne = findViewById(R.id.cb1);
@@ -31,132 +36,77 @@ public class QuizActivity extends AppCompatActivity {
         optionThree = findViewById(R.id.cb3);
         optionFour = findViewById(R.id.cb4);
 
+        initializer(); // database is filled .... plz check
+        quizList = new ArrayList<>();
+        //quizList = mquestionsDao.getAllQuestions();
+        //Log.i(TAG, "onCreate: " + quizList.get(0).getQuestion());
 
-        //show next question
-        findViewById(R.id.btn_next).setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View view)
-            {
-                if(quizezList != null && quizezList.size() >0 && (currentQuestionPosition + 1) <quizezList.size())
-                {
-                    QuestionTable question1 = quizezList.get(++currentQuestionPosition);
+        //getAsyncTask task = new getAsyncTask();
+        //task.execute();
+        //Log.d("checking", "onCreate: " + quizList.get(0).getQuestion());
+        //question.setText(quizList.get(0).getQuestion());
 
-                    question.setText(question1.getQuestion());
-                    optionOne.setText(question1.getOption1());
-                    optionTwo.setText(question1.getOption2());
-                    optionThree.setText(question1.getOption3());
-                    optionFour.setText(question1.getOption4());
-                }else
-                {
-                    Toast.makeText(QuizActivity.this,"You reached at the end of Quiz",Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
 
-        //show previous question
-        findViewById(R.id.btn_prev).setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View view)
-            {
-                if(quizezList != null && quizezList.size() >0 && (currentQuestionPosition - 1) >= 0)
-                {
-                    QuestionTable question1 = quizezList.get(--currentQuestionPosition);
+    }
+    public void initializer()
+    {
+        QuestionTable questionTable1 = new QuestionTable(1,"sandeep?","A","AB","ABC","ABCD");
+        insert(questionTable1);
+        QuestionTable questionTable2 = new QuestionTable(2,"chidi??","B","BB","BBC","BBCD");
+        insert(questionTable2);
+        QuestionTable questionTable3 = new QuestionTable(3,"cijan?","C","CB","CBC","CBCD");
+        insert(questionTable3);
+        QuestionTable questionTable4 = new QuestionTable(4,"yixin?","D","DB","DBC","DBCD");
+        insert(questionTable4);
 
-                    question.setText(question1.getQuestion());
-                    optionOne.setText(question1.getOption1());
-                    optionTwo.setText(question1.getOption2());
-                    optionThree.setText(question1.getOption3());
-                    optionFour.setText(question1.getOption4());
-                }else
-                {
-                    Toast.makeText(QuizActivity.this,"You reached at the start of Quiz",Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        //Fetch quizzes
-        new fetchAllQuizzes().execute();
+    }
+    public void insert (QuestionTable questions)
+    {
+        new insertAsyncTask(mquestionsDao).execute(questions);
     }
 
+    public class insertAsyncTask extends AsyncTask<QuestionTable,Void,Void>
+    {
 
-    private class fetchAllQuizzes extends AsyncTask<String, Void, String>
+        private QuestionsDao mAsyncTaskDao;
+        public insertAsyncTask(QuestionsDao dao) {
+
+            mAsyncTaskDao = dao;
+        }
+        @Override
+        protected Void doInBackground(QuestionTable... questionTables) {
+            mAsyncTaskDao.insert(questionTables[0]);
+            return null;
+        }
+    }
+
+    public class getAsyncTask extends AsyncTask<Void,Integer,Void>
     {
 
         @Override
-        protected String doInBackground(String... params) {
+        protected void onPreExecute() {
+            super.onPreExecute();
 
-            quizezList =  db.questionsDao().getAllQuestions();
-
-            return "Executed";
         }
 
         @Override
-        protected void onPostExecute(String s)
-        {
-            if(quizezList == null || quizezList.size() == 0)
-            {
-                //Insert quizzes
-                new insertAllQuizzes().execute();
-            }else
-            {
-                //Set the first question on screen load
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
 
-                QuestionTable question1 = quizezList.get(0);
 
-                question.setText(question1.getQuestion());
-                optionOne.setText(question1.getOption1());
-                optionTwo.setText(question1.getOption2());
-                optionThree.setText(question1.getOption3());
-                optionFour.setText(question1.getOption4());
-            }
-        }
-
-    }
-
-    /**
-     * @link
-     */
-    private class insertAllQuizzes extends AsyncTask<String, Void, String>
-    {
-
-        @Override
-        protected String doInBackground(String... params) {
-
-            db.questionsDao().insertMultipleMovies(insertAllQuizQuestions());
-
-            return "Executed";
         }
 
         @Override
-        protected void onPostExecute(String s)
-        {
-            //Fetch inserted questions
-            new fetchAllQuizzes().execute();
-        }
-    }
-
-    private List<QuestionTable> insertAllQuizQuestions()
-    {
-        List<QuestionTable> quizQuestions = new ArrayList<>();
-        for (int i =0; i<10;i++)
-        {
-            QuestionTable question = new QuestionTable();
-            question.setQuestion("question " + (i +1 ));
-            question.setOption1("option 1");
-            question.setOption2("option 2");
-            question.setOption3("option 3");
-            question.setOption4("option 4");
-
-            quizQuestions.add(question);
-
+        protected Void doInBackground(Void... voids) {
+            //quizList = mquestionsDao.getAllQuestions();
+            //Log.d(TAG, quizList.get(0).getOption1());
+            return null;
         }
 
-        return quizQuestions;
     }
 
-    }
+}
+
 
 
 
