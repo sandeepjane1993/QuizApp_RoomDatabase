@@ -41,9 +41,9 @@ public class QuizActivity extends AppCompatActivity {
         //quizList = mquestionsDao.getAllQuestions();
         //Log.i(TAG, "onCreate: " + quizList.get(0).getQuestion());
 
-        //getAsyncTask task = new getAsyncTask();
-        //task.execute();
-        //Log.d("checking", "onCreate: " + quizList.get(0).getQuestion());
+        getAsyncTask task = new getAsyncTask();
+        task.execute();
+        //Log.d(TAG, "onCreate: " + quizList.get(0).getQuestion());
         //question.setText(quizList.get(0).getQuestion());
 
 
@@ -75,33 +75,26 @@ public class QuizActivity extends AppCompatActivity {
         }
         @Override
         protected Void doInBackground(QuestionTable... questionTables) {
-            mAsyncTaskDao.insert(questionTables[0]);
+
+            //mAsyncTaskDao.insert(questionTables[0]);
             return null;
         }
     }
 
-    public class getAsyncTask extends AsyncTask<Void,Integer,Void>
+    public class getAsyncTask extends AsyncTask<Void,Void,List<QuestionTable>>
     {
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-        }
 
         @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-
-
+        protected List<QuestionTable> doInBackground(Void... voids) {
+            quizList = mquestionsDao.getAllQuestions();
+            Log.i(TAG, quizList.get(0).getQuestion());
+            Log.i(TAG, quizList.get(1).getQuestion());
+            Log.i(TAG, quizList.get(2).getQuestion());
+            Log.i(TAG, quizList.get(3).getQuestion());
+            return quizList;
         }
 
-        @Override
-        protected Void doInBackground(Void... voids) {
-            //quizList = mquestionsDao.getAllQuestions();
-            //Log.d(TAG, quizList.get(0).getOption1());
-            return null;
-        }
 
     }
 
